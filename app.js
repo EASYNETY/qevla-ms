@@ -16,7 +16,7 @@ app.use("/api/service", serviceRouter);
 app.use("/api/service-station", serviceRouter);
 // app.use("/api/auth/password-reset", authRouter);
 app.use("/api/auth", authRouter);
-app.get("/api/auth-user/welcome",  async (req, res) => {
+app.get("/",  async (req, res) => {
 
   res.status(200).send(`Welcome to your authorized home page 🙌 `);
 });
