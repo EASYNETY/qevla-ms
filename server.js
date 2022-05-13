@@ -9,7 +9,7 @@ mongoose
     useCreateIndex: true,
   })
     .then(() => console.log("Connected to MongoDB!"))
-    .catch((err) => console.log("MongoDB Connection Failed"));
+    .catch((err) => console.log(err.message));
   console.log(process.env.MONGODB_URI);
 
 
