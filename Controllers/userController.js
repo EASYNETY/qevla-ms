@@ -1,28 +1,14 @@
 const bcrypt = require("bcrypt");
 const _ = require("lodash");
-const axios = require("axios");
 const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
 const User = require("../Model/userModel");
 const { Otp } = require("../Model/otpModel");
 const sendMail = require("../utils/email/authVerification");
-const router = require("express").Router();
-const app = require("express");
 const userModel = require("../Model/userModel");
 const serviceModel = require("../Model/serviceModel");
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const client = require("twilio")(accountSid, authToken);
 
-const sendSms = (number, message) => {
-  client.messages
-    .create({
-      body: message,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: number,
-    })
-    .then((message) => console.log(message.sid));
-};
+
 
 module.exports.signUp = async (req, res) => {
   try {
@@ -45,7 +31,7 @@ module.exports.signUp = async (req, res) => {
 
     const number = req.body.number;
     const email = req.body.email;
-    
+
     const otpMessage = `Welcome to Qevla! Your verification code is ${OTP}`;
 
     sendMail(email, otpMessage);
@@ -53,8 +39,6 @@ module.exports.signUp = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     otp.otp = await bcrypt.hash(otp.otp, salt);
     const result = await otp.save();
-
-    sendSms(number, otpMessage);
 
     console.log("User number:>....", number);
 
