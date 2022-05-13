@@ -4,7 +4,7 @@ const userRouter = require('./Routers/userRouter');
 const serviceRouter = require("./Routers/serviceRouter");
 // const serviceStationRouter = require("./Routers/serviceStationRouter");
 const passwordReset = require("./Routers/passwordAuth");
-const authRouter = require("./Routers/index.route");
+const authRouter = require("./Routers/index.route").default;
 app.use(express.json());
 const { verifyToken, verifyTokenAndAuthorization } = require("./Controllers/verifyToken");
 const  User  = require("./Model/userModel");
