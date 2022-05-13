@@ -92,8 +92,6 @@ const resetPassword = async (userId, token, password) => {
 
 
 module.exports = {
-  // signup,
-  // getUsers,
   requestPasswordReset,
   resetPassword,
 };
