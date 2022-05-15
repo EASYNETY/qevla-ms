@@ -18,7 +18,10 @@ app.use("/api/service-station", serviceRouter);
 // app.use("/api/auth/password-reset", authRouter);
 app.use("/api/auth", authRouter);
 app.get("/", async (req, res) => {
-  res.status(200).send(`Welcome to your authorized home page 🙌 `);
+  res.status(200).send(`<h1>Welcome to Qevla</h1>
+  <h3>This project contains the API endpoints for <ul><li>User Onboarding</li><li>Authorization and authentication</li>
+  <li>Service Station Map registration /Pinning</li></ul> 
+  Enjoy your seemless experience🙌 </h3>`);
 });
 
 app.get("/api/user/get/all", verifyTokenAndAuthorization, function (req, res) {
@@ -30,27 +33,6 @@ app.get("/api/user/get/all", verifyTokenAndAuthorization, function (req, res) {
     res.json(users);
   });
 });
-
-// app.get(
-//   "/api/user/admins/getall",
-//   verifyTokenAndAuthorization,
-//   function (req, res) {
-//     User.find({}, function (err, users) {
-//       if (err) {
-//         res.send("Something went wrong!!!");
-//         next();
-//       }
-//       // console.log(users.isAdmin.lenght);
-//       // const isAdmin = users.isAdmin;
-//       if (users.isAdmin = true) {
-//         res.json(users);
-//       } else {
-//         res.json({ message: "No admin found" });
-//       }
-//     });
-//   }
-// );
-
 
 
 app.get("/api/isadmin/:id", function (req, res) {
