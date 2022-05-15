@@ -1,5 +1,5 @@
 const JWT = require("jsonwebtoken");
-var User = require("../Model/userModel");
+const User = require("../Model/userModel");
 const Token = require("../Model/Token.model");
 const sendEmail = require("../utils/email/sendEmail");
 const crypto = require("crypto");
@@ -45,29 +45,32 @@ try {
 }
 };
 
+
+
+
+
 const resetPassword = async (userId, token, password) => {
   try {
-    let passwordResetToken = await Token.findOne(ObjectID(userId));
-  console.log(passwordResetToken.token);
-
+    let passwordResetToken = await Token.findOne({userId: userId});
     if (!passwordResetToken) {
-      throw new Error("Invalid or expired password reset token");
+      return ("No user with the token exist");
     }
 
     const isValid = await bcrypt.compare(token, passwordResetToken.token);
 
     if (!isValid) {
-      throw new Error("Invalid or expired password reset token");
+      return ("Invalid or expired password reset token");
     }
 
     const hash = await bcrypt.hash(password, Number(bcryptSalt));
 
-    await User.updateOne(
-      { _id: userId },
-      { $set: { password: hash } },
-      { new: true }
-    );
+        const id = { _id: userId };
+        const updatedData = { $set: { password: hash } };
+        const options = { new: true };
 
+        const result = await User.findByIdAndUpdate(id, updatedData, options);
+  
+console.log(hash);
     const user = await User.findById({ _id: userId });
     sendEmail(
       user.email,
@@ -80,13 +83,15 @@ const resetPassword = async (userId, token, password) => {
 
     await passwordResetToken.deleteOne();
 
-    return true;
+    return ({message: "Password reset successful!", _id: userId });
+
   } catch (error) {
-    console.log(error);
+    console.log("Error>>>>>>>>>>>>>:", error);
+         return ({message: "Password reset not successful!",  _id: userId });
+
+
   }
 };
-
-
 
 
 

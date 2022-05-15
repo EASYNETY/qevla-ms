@@ -18,7 +18,11 @@ module.exports.Otp = model(
         unique: true,
         required: true,
       },
-      createdAt: { type: Date, default: Date.now, index: { expires: 300 } },
+      createdAt: {
+        type: Date,
+        default: Date.now(),
+        index: { expires: 300 },
+      },
 
       // After 5 minutes it deleted automatically from the database
     },

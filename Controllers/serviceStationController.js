@@ -14,6 +14,8 @@ module.exports.addServicess = async (req, res) => {
     ResponseCode: 200,
   });
 };
+
+
 module.exports.addServiceStation = async (req, res) => {
   try {
     const service = await ServiceStation.create(req.body);
@@ -21,15 +23,6 @@ module.exports.addServiceStation = async (req, res) => {
       message: "Service Station Registration Successfull!",
       data: service,
     });
-
-    // let serviceRendered = new userinfo({
-    //   userid: "1001",
-    //   username: req.body.username,
-    //   gender: req.body.gender,
-    //   class: req.body.class,
-    //   status: req.body.status,
-    // });
-    // await newuserinfo.save();
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Server error" });
@@ -42,19 +35,54 @@ module.exports.getServiceStation = function (req, res) {
       res.send("Something went wrong!!!");
       next();
     }
-    res.json(service_station);
+    res
+      .status(200)
+      .json({
+        responseCode: "00",
+        count: service_station.length,
+        service_station,
+      });
   });
 };
 
-// app.get("/:id", async
-
-module.exports.getServiceStationById = function (req, res, next) {
-  const stationId = req.params.id;
-
+module.exports.getServiceStationById = async (req, res, next) => {
   try {
-    const { data } = ServiceStation.findById(stationId);
-    return res.status(200).json(data);
-  } catch (err) {
-    next(err);
+    const data = await ServiceStation.findById(req.params.id);
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.deleteServiceStation = async (req, res, next) => {
+  const { id } = req.body;
+  await ServiceStation.findById(id)
+    .then((service_station) => service_station.remove())
+    .then((service_station) =>
+      res
+        .status(201)
+        .json({ message: "User successfully deleted", service_station })
+    )
+    .catch((error) =>
+      res
+        .status(400)
+        .json({ message: "An error occurred", error: error.message })
+    );
+};
+
+
+module.exports.updateServiceStationById = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const updatedData = req.body;
+    const options = { new: true };
+
+    const result = await ServiceStation.findByIdAndUpdate(id, updatedData, options);
+
+    res
+      .status(201)
+      .json({ message: "Service Station successfully updated!", updatedData });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 };

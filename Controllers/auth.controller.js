@@ -1,8 +1,10 @@
 const {
- 
   resetPassword,
   requestPasswordReset,
+  passReset,
 } = require("../services/auth.service");
+const User = require("../Model/userModel");
+
 
 
 const resetPasswordRequestController = async (req, res, next) => {
@@ -21,6 +23,8 @@ const resetPasswordController = async (req, res, next) => {
   );
   return res.status(201).json(resetPasswordService);
 };
+
+
 
 module.exports = {
   resetPasswordRequestController,
