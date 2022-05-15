@@ -187,6 +187,7 @@ module.exports.login = async (req, res) => {
   }
 };
 
+ 
 module.exports.getUsers = function ( req, res) {
   try {
     User.find({}, function (err, users) {
@@ -197,7 +198,7 @@ module.exports.getUsers = function ( req, res) {
       res.status(200).json({
         responseCode: "00",
         count: users.length,
-        users,
+          users
       });
     });
   } catch (error) {

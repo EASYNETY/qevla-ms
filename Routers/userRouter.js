@@ -19,7 +19,7 @@ router.route("/admin/delete").delete(deleteUser);
 // router.route("/admin/getall").get(getUsers);
 router.route("/login").post(login);
 router.route("/login/verify").post(verifyOtp);
-// router.route("/get/all").get(getUsers);
+router.route("/get/all").get(getUsers);
 router.route("/delete").delete(deleteUser);
 router.route("/update/:id").patch(updateUserById);
 
