@@ -3,7 +3,17 @@ const jwt = require('jsonwebtoken');
 
 const userSchema = Schema(
   {
-    full_name: {
+    first_name: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    last_name: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    dob: {
       type: String,
       trim: true,
       required: true,
@@ -27,10 +37,18 @@ const userSchema = Schema(
       type: Boolean,
       default: false,
     },
-    referral: {
-      type: String,
-    },
-    // sevices: [{ type: Schema.Types.ObjectId, ref: "service", require: true }],
+    // referral: {
+    //   type: String,
+    // },
+    vehicle_details: [
+      { type: Schema.Types.ObjectId, ref: "vehicleModel", require: true },
+    ],
+    documents: [
+      { type: Schema.Types.ObjectId, ref: "documentModel", require: true },
+    ],
+    payment_details: [
+      { type: Schema.Types.ObjectId, ref: "paymentModel", require: true },
+    ],
     // station: [
     //   { type: Schema.Types.ObjectId, ref: "service-station", require: true },
     // ],

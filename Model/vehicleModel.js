@@ -1,7 +1,7 @@
 const { Schema, model } = require('mongoose');
 const jwt = require('jsonwebtoken');
 
-const serviceSchema = Schema(
+const vehicleSchema = Schema(
   {
     userId: {
       type: String,
@@ -9,18 +9,25 @@ const serviceSchema = Schema(
       required: true,
       unique: true,
     },
-    service_id: {
-      type: String,
-      trim: true,
-      required: true,
-      unique: true,
-    },
-    service_name: {
+    v_manufacturer: {
       type: String,
       trim: true,
       required: true,
     },
-    service_cost: {
+    vehicle_type: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    max_weight: {
+      type: String,
+      required: true,
+    },
+    v_license: {
+      type: String,
+      required: true,
+    },
+    address: {
       type: String,
       required: true,
     },
@@ -30,5 +37,5 @@ const serviceSchema = Schema(
 
 
 
-// module.exports.User = model('user', serviceSchema);
-module.exports = model("service", serviceSchema);
+// module.exports.User = model('user', vehicleSchema);
+module.exports = model("vehicleModel", vehicleSchema);

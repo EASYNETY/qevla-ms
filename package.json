@@ -1,5 +1,5 @@
 {
-  "name": "Qevla-Microservice",
+  "name": "qevla-microservice",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -23,6 +23,7 @@
     "nodemailer": "^6.7.4",
     "nodemon": "^2.0.15",
     "otp-generator": "^2.0.1",
+    "twilio": "^3.77.1",
     "two-step-auth": "^1.1.2"
   }
 }

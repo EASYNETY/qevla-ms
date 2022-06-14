@@ -3,18 +3,24 @@ const _ = require("lodash");
 const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
 const User = require("../Model/userModel");
+const Vehicle = require("../Model/vehicleModel");
+const Document = require("../Model/documentModel");
+const Payment = require("../Model/paymentModel");
 const { Otp } = require("../Model/otpModel");
 const sendMail = require("../utils/email/authVerification");
 const userModel = require("../Model/userModel");
 const serviceModel = require("../Model/serviceModel");
-const {
-  verifyToken,
-  verifyTokenAndAuthorization,
-} = require("./verifyToken");
+const { verifyToken, verifyTokenAndAuthorization } = require("./verifyToken");
+const CustomerService = require("../services/customer-service");
+const UserAuth = require("./middlewares/auth");
+
+const accountSid = process.env.ACCOUNT_SID;
+const authToken = process.env.AUTH_TOKEN;
+const client = require("twilio")(accountSid, authToken);
 
 const express = require("express");
 const app = express();
-
+const service = new CustomerService();
 
 module.exports.signUp = async (req, res) => {
   try {
@@ -47,6 +53,14 @@ module.exports.signUp = async (req, res) => {
     const result = await otp.save();
 
     console.log("User number:>....", number);
+    client.messages
+      .create({
+        body: `Your One Time Login Password For Qevla is ${OTP}`,
+        from: process.env.PHONE_NUMBER,
+        to: number,
+      })
+      .then((messages) => console.log(messages))
+      .catch((err) => console.error(err));
 
     return res.status(200).json({
       ResponseCode: 200,
@@ -59,19 +73,22 @@ module.exports.signUp = async (req, res) => {
   }
 };
 
-module.exports.verifyOtp = async (req, res) => {
-  const otpHolder = await Otp.find({
-    number: req.body.number,
-  });
-  if (otpHolder.length === 0)
-    return res.status(400).send("You use an Expired OTP!");
-  const rightOtpFind = otpHolder[otpHolder.length - 1];
-  const validUser = await bcrypt.compare(req.body.otp, rightOtpFind.otp);
+module.exports.personalInfo = async (req, res) => {
+  try {
+    // const otpHolder = await Otp.find({
+    //   number: req.body.number,
+    // });
+    // if (otpHolder.length === 0)
+    //   return res.status(400).send("You use an Expired OTP!");
+    // const rightOtpFind = otpHolder[otpHolder.length - 1];
+    // const validUser = await bcrypt.compare(req.body.otp, rightOtpFind.otp);
 
-  if (rightOtpFind.number === req.body.number && validUser) {
+    // if (rightOtpFind.number === req.body.number && validUser) {
     const user = new User(
       _.pick(req.body, [
-        "full_name",
+        "first_name",
+        "last_name",
+        "dob",
         "number",
         "email",
         "password",
@@ -84,50 +101,216 @@ module.exports.verifyOtp = async (req, res) => {
     user.isAdmin = false;
     const token = user.generateJWT();
     const result = await user.save();
-    const OTPDelete = await Otp.deleteMany({
-      number: rightOtpFind.number,
+    // const OTPDelete = await Otp.deleteMany({
+    //   number: rightOtpFind.number,
+    // });
+    // if(result.data)
+// Stages
+ 
+    return res.status(200).send({
+      message: "User Registration Successfull!",
+      token: token,
+      data: result,
     });
+    // console.log(result.data[1]);
+
+    // } else {
+    //   return res.status(400).send("Your OTP was wrong!");
+    // }
+  } catch (error) {
+    if (error.code == 11000) {
+      res.status(503).send({
+        message: "User phone number already taken!!",
+      });
+    }
+  }
+};
+
+module.exports.vehicleDetails = async (req, res, next) => {
+  try {
+    const vehicle = new Vehicle(
+      _.pick(req.body, [
+        "userId",
+        "v_manufacturer",
+        "vehicle_type",
+        "max_weight",
+        "v_license",
+        "address",
+      ])
+    );
+    User.updateOne(
+      { _id: req.body.userId },
+      { $addToSet: { vehicle_details: [vehicle] } },
+      { new: true },
+      function (err, result) {
+        if (err) {
+          res.send(err);
+        } else {
+          console.log(result)
+        }
+      }
+    );
+
+    console.log(vehicle)
+
+
+
+    const data = await vehicle.save();
+    return res.json({ data });
+  } catch (error) {
+    try {
+      if (error.code == 11000) {
+        const { userId } = req.body;
+
+        if (!userId) {
+          res.status(400).send("No user to add the payment details provided");
+        }
+        const user = await User.findOne({ _id: userId });
+        res.status(503).send({
+          message: `User ${user.first_name} ${user.last_name}'s  vehicle details already taken!!`,
+        });
+      }
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+};
+
+module.exports.documents = async (req, res, next) => {
+  try {
+    const document = new Document(
+      _.pick(req.body, ["userId", "nin", "bvn", "license"])
+    );
+
+      User.updateOne(
+        { _id: req.body.userId },
+        { $addToSet: { documents: [document] } },
+        function (err, result) {
+          if (err) {
+            res.send(err);
+          } else {
+            console.log(result);
+          }
+        }
+      );
+    const data = await document.save();
+
+    return res.json(data);
+  } catch (error) {
+    try {
+      if (error.code == 11000) {
+        const { userId } = req.body;
+
+        if (!userId) {
+          res.status(400).send("No user to add the payment details provided");
+        }
+        const user = await User.findOne({ _id: userId });
+        res.status(503).send({
+          message: `User ${user.first_name} ${user.last_name}'s  documents already taken!!`,
+        });
+      }
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+};
+
+module.exports.paymentDetails = async (req, res, next) => {
+  try {
+      const payment = new Payment(
+      _.pick(req.body, [
+        "userId",
+        "bank_holder_name",
+        "account_number",
+        "bank_name",
+      ])
+    );
+
+     User.updateOne(
+       { _id: req.body.userId },
+       { $addToSet: { payment_details: [payment] } },
+       function (err, result) {
+         if (err) {
+           res.send(err);
+         } else {
+           console.log(result);
+         }
+       }
+     );
+    const data = await payment.save();
+    return res.json(data);
+  } catch (error) {
+    if (error.code == 11000) {
+      const { userId } = req.body;
+
+      if (!userId) {
+        res.status(400).send("No user to add the payment details provided");
+      }
+      const user = await User.findOne({ _id: userId });
+      res.status(503).send({
+        message: `User ${user.first_name} ${user.last_name}'s  payment details already taken!!`,
+      });
+    }
+  }
+};
+
+// Get user information by user id
+module.exports.getVehicleByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const userVehicle = await Vehicle.findOne({ userId: userId });
+    res.status(200).json(userVehicle);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports.getDocumentByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const userDocument = await Document.findOne({ userId: userId });
+    res.status(200).json(userDocument);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports.getPaymentDetailsByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const userPaymentDetails = await Payment.findOne({ userId: userId });
+    res.status(200).json(userPaymentDetails);
+  } catch (error) {
+    res.status(500).json({ message: "No payment details associated with the user" });
+  }
+};
+module.exports.createAdmin = async (req, res) => {
+  try {
+    const admin = new User(
+      _.pick(req.body, [
+        "full_name",
+        "number",
+        "email",
+        "password",
+        "isAdmin",
+        "referral",
+      ])
+    );
+    const salt = await bcrypt.genSalt(10);
+    admin.password = await bcrypt.hash(admin.password, salt);
+    admin.isAdmin = true;
+    const token = admin.generateJWT();
+    const result = await admin.save();
 
     return res.status(200).send({
       message: "User Registration Successfull!",
       token: token,
       data: result,
     });
-  } else {
-    return res.status(400).send("Your OTP was wrong!");
+  } catch (error) {
+    res.status(500).json(error.message);
   }
 };
-
-
-module.exports.createAdmin = async (req, res) => {
-    try {
-      const admin = new User(
-        _.pick(req.body, [
-          "full_name",
-          "number",
-          "email",
-          "password",
-          "isAdmin",
-          "referral",
-        ])
-      );
-      const salt = await bcrypt.genSalt(10);
-      admin.password = await bcrypt.hash(admin.password, salt);
-      admin.isAdmin = true;
-      const token = admin.generateJWT();
-      const result = await admin.save();
-
-      return res.status(200).send({
-        message: "User Registration Successfull!",
-        token: token,
-        data: result,
-      });
-    } catch (error) {
-      res.status(500).json(error.message)
-      
-    }
-};
-
 
 module.exports.UpdateUser = async (_Id, service_name, service_ncost) => {
   try {
@@ -157,6 +340,7 @@ module.exports.login = async (req, res) => {
       res.status(400).send("All input is required");
     }
     const user = await User.findOne({ number });
+    console.log(user);
 
     if (user && (await bcrypt.compare(password, user.password))) {
       const token = jwt.sign(
@@ -177,9 +361,8 @@ module.exports.login = async (req, res) => {
         ResponseMessage: `Welcome ${user.full_name}! You have logged in successfully!`,
         Token: token,
       });
-    }else{
-    res.status(400).json({ error: "Incorrect Password!!" });
-
+    } else {
+      res.status(400).json({ error: "Incorrect Password!!" });
     }
     // res.status(400).send("Invalid Credentials");
   } catch (err) {
@@ -187,8 +370,7 @@ module.exports.login = async (req, res) => {
   }
 };
 
- 
-module.exports.getUsers = function ( req, res) {
+module.exports.getUsers = function (req, res) {
   try {
     User.find({}, function (err, users) {
       if (err) {
@@ -198,7 +380,7 @@ module.exports.getUsers = function ( req, res) {
       res.status(200).json({
         responseCode: "00",
         count: users.length,
-          users
+        users,
       });
     });
   } catch (error) {
@@ -255,7 +437,6 @@ module.exports.updateUserById = async (req, res) => {
   }
 };
 
-
 module.exports.updateUserPasswordByIdyu = async (req, res) => {
   try {
     const id = req.params.id;
@@ -274,10 +455,6 @@ module.exports.updateUserPasswordByIdyu = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
-
-
-
-
 
 module.exports.updateUserPasswordById = async (userId, token, password) => {
   try {
@@ -320,47 +497,44 @@ module.exports.updateUserPasswordById = async (userId, token, password) => {
   }
 };
 
-
-
 module.exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
   User.findOne({ email }),
     (err, user) => {
       if (err) {
-      console.lor(err);
+        console.lor(err);
         return res
           .status(400)
           .json({ error: "User with this email does not exist" });
       }
-       const token = jwt.sign(
-         { user_id: user._id, number: user.number },
-         process.env.JWT_SECRET_KEY,
-         {
-           expiresIn: "20m",
-         }
-       );
+      const token = jwt.sign(
+        { user_id: user._id, number: user.number },
+        process.env.JWT_SECRET_KEY,
+        {
+          expiresIn: "20m",
+        }
+      );
 
-         sendEmail(
-           user.email,
-           "Password Reset Request",
-           {
-             name: user.name,
-             link: link,
-           },
-           "./template/requestResetPassword.handlebars"
-         );
+      sendEmail(
+        user.email,
+        "Password Reset Request",
+        {
+          name: user.name,
+          link: link,
+        },
+        "./template/requestResetPassword.handlebars"
+      );
 
-    return user.updateOne({ resetLink: token }, function (err, success) {
-      console.lor(err);
-    if (err) {
-      return res.status(400).json({ error: "password reset link error!!" });
-    } else {
-      res.json({ message: "Password reset link sent successfully" });
-    }
-  });
+      return user.updateOne({ resetLink: token }, function (err, success) {
+        console.lor(err);
+        if (err) {
+          return res.status(400).json({ error: "password reset link error!!" });
+        } else {
+          res.json({ message: "Password reset link sent successfully" });
+        }
+      });
     };
 };
-
 
 module.exports.passReset = async (req, res) => {
   const { resetLink, newPass } = req.body;

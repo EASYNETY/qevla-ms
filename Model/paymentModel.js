@@ -1,7 +1,7 @@
 const { Schema, model } = require('mongoose');
 const jwt = require('jsonwebtoken');
 
-const serviceSchema = Schema(
+const payemntSchema = Schema(
   {
     userId: {
       type: String,
@@ -9,18 +9,17 @@ const serviceSchema = Schema(
       required: true,
       unique: true,
     },
-    service_id: {
-      type: String,
-      trim: true,
-      required: true,
-      unique: true,
-    },
-    service_name: {
+    bank_holder_name: {
       type: String,
       trim: true,
       required: true,
     },
-    service_cost: {
+    account_number: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    bank_name: {
       type: String,
       required: true,
     },
@@ -30,5 +29,5 @@ const serviceSchema = Schema(
 
 
 
-// module.exports.User = model('user', serviceSchema);
-module.exports = model("service", serviceSchema);
+// module.exports.User = model('user', payemntSchema);
+module.exports = model("paymentModel", payemntSchema);

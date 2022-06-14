@@ -5,12 +5,19 @@ const serviceRouter = require("./Routers/serviceRouter");
 // const serviceStationRouter = require("./Routers/serviceStationRouter");
 const passwordReset = require("./Routers/passwordAuth");
 const authRouter = require("./Routers/index.route");
+const CustomerService = require("./services/customer-service");
+const UserAuth = require("./Controllers/middlewares/auth");
+const cors = require("cors");
+
+app.use(cors()); 
 app.use(express.json());
 const {
   verifyToken,
   verifyTokenAndAuthorization,
 } = require("./Controllers/verifyToken");
 const User = require("./Model/userModel");
+
+const service = new CustomerService();
 
 app.use("/api/user", userRouter);
 app.use("/api/service", serviceRouter);
@@ -34,7 +41,6 @@ app.get("/api/user/get/all", verifyTokenAndAuthorization, function (req, res) {
   });
 });
 
-
 app.get("/api/isadmin/:id", function (req, res) {
   User.findById(req.params.id, function (err, user) {
     if (user.isAdmin == true) {
@@ -44,4 +50,28 @@ app.get("/api/isadmin/:id", function (req, res) {
     }
   });
 });
+// app.post(
+//   "/api/user/signup/vehicle-details",
+//   verifyToken,
+//   async (req, res, next) => {
+//     try {
+//       const { _id } = req.user;
+
+//       const { v_manufacture, vehicle_type, max_weight, v_license, address } =
+//         req.body;
+
+//       const { data } = await service.AddNewVehicleDetails(_id, {
+//         v_manufacture,
+//         vehicle_type,
+//         max_weight,
+//         v_license,
+//         address,
+//       });
+//       console.log(data);
+//       return res.json(data);
+//     } catch (err) {
+//       next(err);
+//     }
+//   }
+// );
 module.exports = app;
