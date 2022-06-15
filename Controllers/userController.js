@@ -3,6 +3,7 @@ const _ = require("lodash");
 const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
 const User = require("../Model/userModel");
+const UserReg = require("../Model/fullReguserModel");
 const Vehicle = require("../Model/vehicleModel");
 const Document = require("../Model/documentModel");
 const Payment = require("../Model/paymentModel");
@@ -73,6 +74,59 @@ module.exports.signUp = async (req, res) => {
   }
 };
 
+module.exports.userReg = async (req, res) => {
+  try {
+    const user = new UserReg(
+      _.pick(req.body, [
+        "first_name",
+        "last_name",
+        "dob",
+        "number",
+        "email",
+        "password",
+        "isAdmin",
+        "vehicle_details",
+        "documents",
+        "payment_details",
+      ])
+    );
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(user.password, salt);
+    user.isAdmin = false;
+    const token = user.generateJWT();
+    const result = await user.save();
+    try {
+      if (result.vehicle_details.length < 1) {
+        return res.status(205).json({ RegStatus: 1 });
+      } else if (result.documents.length < 1) {
+        return res.status(205).json({ RegStatus: 2 });
+      } else if (result.payment_details.length < 1) {
+        return res.status(205).json({ RegStatus: 3 });
+      } else {
+        return res.status(200).send({
+          message: "User Registration Successfull!",
+          token: token,
+          data: result,
+        });
+      }
+    } catch (error) {
+      res.send(error.message);
+    }
+
+    // console.log(result.data[1]);
+
+    // } else {
+    //   return res.status(400).send("Your OTP was wrong!");
+    // }
+  } catch (error) {
+    if (error.code == 11000) {
+      res.status(503).send({
+        message: "User phone number already taken!!",
+      });
+    }
+  }
+};
+
 module.exports.personalInfo = async (req, res) => {
   try {
     // const otpHolder = await Otp.find({
@@ -105,8 +159,8 @@ module.exports.personalInfo = async (req, res) => {
     //   number: rightOtpFind.number,
     // });
     // if(result.data)
-// Stages
- 
+    // Stages
+
     return res.status(200).send({
       message: "User Registration Successfull!",
       token: token,
@@ -146,14 +200,12 @@ module.exports.vehicleDetails = async (req, res, next) => {
         if (err) {
           res.send(err);
         } else {
-          console.log(result)
+          console.log(result);
         }
       }
     );
 
-    console.log(vehicle)
-
-
+    console.log(vehicle);
 
     const data = await vehicle.save();
     return res.json({ data });
@@ -182,17 +234,17 @@ module.exports.documents = async (req, res, next) => {
       _.pick(req.body, ["userId", "nin", "bvn", "license"])
     );
 
-      User.updateOne(
-        { _id: req.body.userId },
-        { $addToSet: { documents: [document] } },
-        function (err, result) {
-          if (err) {
-            res.send(err);
-          } else {
-            console.log(result);
-          }
+    User.updateOne(
+      { _id: req.body.userId },
+      { $addToSet: { documents: [document] } },
+      function (err, result) {
+        if (err) {
+          res.send(err);
+        } else {
+          console.log(result);
         }
-      );
+      }
+    );
     const data = await document.save();
 
     return res.json(data);
@@ -217,7 +269,7 @@ module.exports.documents = async (req, res, next) => {
 
 module.exports.paymentDetails = async (req, res, next) => {
   try {
-      const payment = new Payment(
+    const payment = new Payment(
       _.pick(req.body, [
         "userId",
         "bank_holder_name",
@@ -226,17 +278,17 @@ module.exports.paymentDetails = async (req, res, next) => {
       ])
     );
 
-     User.updateOne(
-       { _id: req.body.userId },
-       { $addToSet: { payment_details: [payment] } },
-       function (err, result) {
-         if (err) {
-           res.send(err);
-         } else {
-           console.log(result);
-         }
-       }
-     );
+    User.updateOne(
+      { _id: req.body.userId },
+      { $addToSet: { payment_details: [payment] } },
+      function (err, result) {
+        if (err) {
+          res.send(err);
+        } else {
+          console.log(result);
+        }
+      }
+    );
     const data = await payment.save();
     return res.json(data);
   } catch (error) {
@@ -252,6 +304,22 @@ module.exports.paymentDetails = async (req, res, next) => {
       });
     }
   }
+};
+
+module.exports.getRegistrationStatusById = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const userVehicle = await Vehicle.findOne({ userId: userId });
+    const userDocument = await Document.findOne({ userId: userId });
+    const userPaymentDetails = await Payment.findOne({ userId: userId });
+    try {
+      if (userVehicle.userId == userId) {
+        res.json({ RegStatus: 1 });
+      } else if (!userVehicle) {
+        res.send("Please enter you vehicle details");
+      }
+    } catch (error) {}
+  } catch (error) {}
 };
 
 // Get user information by user id
@@ -281,7 +349,9 @@ module.exports.getPaymentDetailsByUserId = async (req, res) => {
     const userPaymentDetails = await Payment.findOne({ userId: userId });
     res.status(200).json(userPaymentDetails);
   } catch (error) {
-    res.status(500).json({ message: "No payment details associated with the user" });
+    res
+      .status(500)
+      .json({ message: "No payment details associated with the user" });
   }
 };
 module.exports.createAdmin = async (req, res) => {
@@ -339,8 +409,7 @@ module.exports.login = async (req, res) => {
     if (!(number && password)) {
       res.status(400).send("All input is required");
     }
-    const user = await User.findOne({ number });
-    console.log(user);
+    const user = await UserReg.findOne({ number });
 
     if (user && (await bcrypt.compare(password, user.password))) {
       const token = jwt.sign(
@@ -358,7 +427,7 @@ module.exports.login = async (req, res) => {
       // user
       res.status(200).json({
         ResponseCode: "00",
-        ResponseMessage: `Welcome ${user.full_name}! You have logged in successfully!`,
+        ResponseMessage: `Welcome ${user.first_name}! You have logged in successfully!`,
         Token: token,
       });
     } else {
@@ -372,7 +441,7 @@ module.exports.login = async (req, res) => {
 
 module.exports.getUsers = function (req, res) {
   try {
-    User.find({}, function (err, users) {
+    UserReg.find({}, function (err, users) {
       if (err) {
         res.send("Something went wrong!!!");
         next();
@@ -389,7 +458,7 @@ module.exports.getUsers = function (req, res) {
 };
 
 app.get("/api/users", verifyTokenAndAuthorization, function (req, res) {
-  User.find({}, function (err, users) {
+  UserReg.find({}, function (err, users) {
     if (err) {
       res.send("Something went wrong!!!");
       next();
@@ -400,7 +469,7 @@ app.get("/api/users", verifyTokenAndAuthorization, function (req, res) {
 
 exports.deleteUser = async (req, res, next) => {
   const { id } = req.body;
-  await User.findById(id)
+  await UserReg.findById(id)
     .then((user) => user.remove())
     .then((user) =>
       res.status(201).json({ message: "User successfully deleted", user })
@@ -414,8 +483,36 @@ exports.deleteUser = async (req, res, next) => {
 
 module.exports.getUserById = async (req, res) => {
   try {
-    const data = await User.findById(req.params.id);
-    res.status(200).json(data);
+    const data = await UserReg.findById(req.params.id);
+
+     try {
+       if (data.vehicle_details.length < 1) {
+         return res.status(205).json({ ResponseMessage: "You have not added your vehicle details yet", RegStatus: 1 });
+       } else if (data.documents.length < 1) {
+         return res
+           .status(205)
+           .json({
+             ResponseMessage: "You have not added your documents yet",
+             RegStatus: 2,
+           });
+       } else if (data.payment_details.length < 1) {
+         return res
+           .status(205)
+           .json({
+             ResponseMessage: "You have not added your payment details yet",
+             RegStatus: 3,
+           });
+       } else {
+         return res.status(200).send({
+          RegStatus : "Completed",
+           message: "This user is fully registered",
+           data: data,
+         });
+       }
+     } catch (error) {
+       res.send(error.message);
+     }
+    
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -426,12 +523,15 @@ module.exports.updateUserById = async (req, res) => {
     const id = req.params.id;
     const updatedData = req.body;
     const options = { new: true };
+    if (req.body.password){
+      res.json({message: "Can not send user update  request with password parameter"})
+    }else {
+      const result = await UserReg.findByIdAndUpdate(id, updatedData, options);
 
-    const result = await User.findByIdAndUpdate(id, updatedData, options);
-
-    res
-      .status(201)
-      .json({ message: "User successfully updated!", updatedData });
+      res
+        .status(201)
+        .json({ message: "User successfully updated!", updatedData });
+    }
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -446,7 +546,7 @@ module.exports.updateUserPasswordByIdyu = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     updatedPassword = await bcrypt.hash(updatedPassword, salt);
 
-    const result = await User.findByIdAndUpdate(id, updatedPassword, options);
+    const result = await UserReg.findByIdAndUpdate(id, updatedPassword, options);
 
     res
       .status(201)
@@ -479,7 +579,7 @@ module.exports.updateUserPasswordById = async (userId, token, password) => {
       { new: true }
     );
 
-    const user = await User.findById({ _id: userId });
+    const user = await UserReg.findById({ _id: userId });
     sendEmail(
       user.email,
       "Password Reset Successfully",
@@ -499,7 +599,7 @@ module.exports.updateUserPasswordById = async (userId, token, password) => {
 
 module.exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
-  User.findOne({ email }),
+  UserReg.findOne({ email }),
     (err, user) => {
       if (err) {
         console.lor(err);
@@ -548,7 +648,7 @@ module.exports.passReset = async (req, res) => {
             error: "Incorrect or expired token!!",
           });
         }
-        User.findOne(resetLink, (err, user) => {
+        UserReg.findOne(resetLink, (err, user) => {
           if (err || user) {
             return res.status(400).json({
               error: "User with this token does not exist",
