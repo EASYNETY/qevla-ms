@@ -20,6 +20,7 @@ const authToken = process.env.AUTH_TOKEN;
 const client = require("twilio")(accountSid, authToken);
 
 const express = require("express");
+const catchAsyncErrors = require("./catchAsyncErrors");
 const app = express();
 const service = new CustomerService();
 
@@ -95,25 +96,37 @@ module.exports.userReg = async (req, res) => {
     user.isAdmin = false;
     const token = user.generateJWT();
     const result = await user.save();
-    try {
-      if (result.vehicle_details.length < 1) {
-        return res.status(205).json({ RegStatus: 1 });
-      } else if (result.documents.length < 1) {
-        return res.status(205).json({ RegStatus: 2 });
-      } else if (result.payment_details.length < 1) {
-        return res.status(205).json({ RegStatus: 3 });
-      } else {
-        return res.status(200).send({
-          message: "User Registration Successfull!",
-          token: token,
-          data: result,
-        });
-      }
-    } catch (error) {
-      res.send(error.message);
-    }
+        try {
+           if (result.vehicle_details.length < 1) {
+             return res.status(205).json({
+               ResponseMessage: "You have not added your vehicle details yet",
+               RegStatus: 1,
+               data: result,
+             });
+           } else if (result.documents.length < 1) {
+             return res.status(205).json({
+               ResponseMessage: "You have not added your documents yet",
+               RegStatus: 2,
+               data: result,
+             });
+           } else if (result.payment_details.length < 1) {
+             return res.status(205).json({
+               ResponseMessage: "You have not added your payment details yet",
+               RegStatus: 3,
+               data: result,
+             });
+           } else {
+             return res.status(200).send({
+               message: "User Registration Successfull!",
+               token: token,
+               data: result,
+             });
+           }
+         } catch (error) {
+           res.send(error.message);
+         }
 
-    // console.log(result.data[1]);
+        // console.log(result.data[1]);
 
     // } else {
     //   return res.status(400).send("Your OTP was wrong!");
@@ -439,6 +452,18 @@ module.exports.login = async (req, res) => {
   }
 };
 
+module.exports.logout = catchAsyncErrors(async (req, res, next) => {
+  res.cookie("token", null, {
+    expires: new Date(Date.now()),
+    httpOnly: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Logged Out",
+  });
+});
+
 module.exports.getUsers = function (req, res) {
   try {
     UserReg.find({}, function (err, users) {
@@ -487,21 +512,21 @@ module.exports.getUserById = async (req, res) => {
 
      try {
        if (data.vehicle_details.length < 1) {
-         return res.status(205).json({ ResponseMessage: "You have not added your vehicle details yet", RegStatus: 1 });
+         return res.status(205).json({ ResponseMessage: "You have not added your vehicle details yet", RegStatus: 1, data : data });
        } else if (data.documents.length < 1) {
          return res
            .status(205)
            .json({
              ResponseMessage: "You have not added your documents yet",
              RegStatus: 2,
+             data : data
            });
        } else if (data.payment_details.length < 1) {
-         return res
-           .status(205)
-           .json({
-             ResponseMessage: "You have not added your payment details yet",
-             RegStatus: 3,
-           });
+         return res.status(205).json({
+           ResponseMessage: "You have not added your payment details yet",
+           RegStatus: 3,
+           data: data,
+         });
        } else {
          return res.status(200).send({
           RegStatus : "Completed",
@@ -518,14 +543,16 @@ module.exports.getUserById = async (req, res) => {
   }
 };
 
-module.exports.updateUserById = async (req, res) => {
+module.exports.updateUserById = (async (req, res) => {
   try {
     const id = req.params.id;
     const updatedData = req.body;
     const options = { new: true };
-    if (req.body.password){
-      res.json({message: "Can not send user update  request with password parameter"})
-    }else {
+    if (req.body.password) {
+      res.json({
+        message: "Can not send user update  request with password parameter",
+      });
+    } else {
       const result = await UserReg.findByIdAndUpdate(id, updatedData, options);
 
       res
@@ -535,7 +562,7 @@ module.exports.updateUserById = async (req, res) => {
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
-};
+});
 
 module.exports.updateUserPasswordByIdyu = async (req, res) => {
   try {

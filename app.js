@@ -7,6 +7,8 @@ const passwordReset = require("./Routers/passwordAuth");
 const authRouter = require("./Routers/index.route");
 const CustomerService = require("./services/customer-service");
 const UserAuth = require("./Controllers/middlewares/auth");
+const cookieParser = require("cookie-parser");
+app.use(cookieParser());
 const cors = require("cors");
 
 app.use(cors()); 
