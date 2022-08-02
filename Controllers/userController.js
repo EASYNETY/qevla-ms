@@ -4,6 +4,7 @@ const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
 const User = require("../Model/userModel");
 const UserReg = require("../Model/fullReguserModel");
+const Address = require("../Model/addressModel");
 const Vehicle = require("../Model/vehicleModel");
 const Document = require("../Model/documentModel");
 const Payment = require("../Model/paymentModel");
@@ -86,6 +87,7 @@ module.exports.userReg = async (req, res) => {
         "email",
         "password",
         "isAdmin",
+        "address",
         "vehicle_details",
         "documents",
         "payment_details",
@@ -133,6 +135,7 @@ module.exports.userReg = async (req, res) => {
     // }
   } catch (error) {
     if (error.code == 11000) {
+      console.log(error)
       res.status(503).send({
         message: "User phone number already taken!!",
       });
@@ -442,6 +445,7 @@ module.exports.login = async (req, res) => {
         ResponseCode: "00",
         ResponseMessage: `Welcome ${user.first_name}! You have logged in successfully!`,
         Token: token,
+        user : user
       });
     } else {
       res.status(400).json({ error: "Incorrect Password!!" });

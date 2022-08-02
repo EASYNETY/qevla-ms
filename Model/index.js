@@ -1,6 +1,7 @@
 module.exports = {
-    UserModel: require('./userModel'),
-    VehicleModel: require('./vehicleModel'),
-    DocumentModel: require('./documentModel'),
-    PaymentModel: require('./paymentModel')
-}
+  UserModel: require("./userModel"),
+  AddressModel: require("./addressModel"),
+  VehicleModel: require("./vehicleModel"),
+  DocumentModel: require("./documentModel"),
+  PaymentModel: require("./paymentModel"),
+};

@@ -40,6 +40,9 @@ const userSchema = Schema(
     // referral: {
     //   type: String,
     // },
+    address: [
+      { type: Schema.Types.ObjectId, ref: "addressModel", require: true },
+    ],
     vehicle_details: [
       { type: Schema.Types.ObjectId, ref: "vehicleModel", require: true },
     ],

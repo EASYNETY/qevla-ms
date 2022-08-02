@@ -40,6 +40,20 @@ const fulluserSchema = Schema(
     // referral: {
     //   type: String,
     // },
+    address : [
+       {
+    long: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    lat: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+  },
+    ],
     vehicle_details: [
       {
         v_manufacturer: {
