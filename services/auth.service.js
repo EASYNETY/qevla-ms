@@ -1,5 +1,6 @@
 const JWT = require("jsonwebtoken");
 const User = require("../Model/userModel");
+const UserReg = require("../Model/fullReguserModel");
 const Token = require("../Model/Token.model");
 const sendEmail = require("../utils/email/sendEmail");
 const crypto = require("crypto");
@@ -12,7 +13,7 @@ const clientURL = process.env.CLIENT_URL;
 
 const requestPasswordReset = async (email) => {
 try {
-    const user = await User.findOne({ email });
+    const user = await UserReg.findOne({ email });
     if (!user) throw new Error("Email does not exist");
 
     let token = await Token.findOne({ userId: user._id });
@@ -68,10 +69,14 @@ const resetPassword = async (userId, token, password) => {
         const updatedData = { $set: { password: hash } };
         const options = { new: true };
 
-        const result = await User.findByIdAndUpdate(id, updatedData, options);
+        const result = await UserReg.findByIdAndUpdate(
+          id,
+          updatedData,
+          options
+        );
   
 console.log(hash);
-    const user = await User.findById({ _id: userId });
+    const user = await UserReg.findById({ _id: userId });
     sendEmail(
       user.email,
       "Password Reset Successfully",
