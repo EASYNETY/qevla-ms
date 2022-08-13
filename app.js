@@ -12,6 +12,13 @@ app.use(cookieParser());
 const cors = require("cors");
 
 app.use(cors()); 
+
+app.options(
+  "*",
+  cors({ origin: "http://localhost:3000", optionsSuccessStatus: 200 })
+);
+
+app.use(cors({ origin: "http://localhost:3000", optionsSuccessStatus: 200 }));
 app.use(express.json());
 const {
   verifyToken,
