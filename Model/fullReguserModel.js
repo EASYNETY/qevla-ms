@@ -40,21 +40,21 @@ const fulluserSchema = Schema(
     // referral: {
     //   type: String,
     // },
-    address: {
-      
-        lat: {
-          type: String,
-          trim: true,
-          required: true,
-        },
-        long: {
-          type: String,
-          trim: true,
-          required: true,
-        },
-      
-      },
-    vehicle_details: 
+    address : [
+       {
+    long: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    lat: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+  },
+    ],
+    vehicle_details: [
       {
         v_manufacturer: {
           type: String,
@@ -79,7 +79,8 @@ const fulluserSchema = Schema(
           required: true,
         },
       },
-    documents: 
+    ],
+    documents: [
       {
         nin: {
           type: String,
@@ -95,7 +96,8 @@ const fulluserSchema = Schema(
           required: true,
         },
       },
-    payment_details: 
+    ],
+    payment_details: [
       {
         bank_holder_name: {
           type: String,
@@ -112,6 +114,7 @@ const fulluserSchema = Schema(
           required: true,
         },
       },
+    ],
     // station: [
     //   { type: Schema.Types.ObjectId, ref: "service-station", require: true },
     // ],
