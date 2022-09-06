@@ -456,6 +456,43 @@ module.exports.login = async (req, res) => {
   }
 };
 
+module.exports.adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!(email && password)) {
+      res.status(400).send("All input is required");
+    }
+    const user = await UserReg.findOne({ email });
+
+    if (user && (await bcrypt.compare(password, user.password))) {
+      const token = jwt.sign(
+        { user_id: user._id, email: user.email },
+        process.env.JWT_SECRET_KEY,
+        {
+          expiresIn: "2h",
+        }
+      );
+      console.log(token);
+
+      // save user token
+      user.token = token;
+
+      // user
+      res.status(200).json({
+        ResponseCode: "00",
+        ResponseMessage: `Welcome ${user.first_name}! You have logged in successfully!`,
+        Token: token,
+        user: user,
+      });
+    } else {
+      res.status(400).json({ error: "Incorrect Password!!" });
+    }
+    // res.status(400).send("Invalid Credentials");
+  } catch (err) {
+    console.log(err);
+  }
+};
+
 module.exports.logout = catchAsyncErrors(async (req, res, next) => {
   res.cookie("token", null, {
     expires: new Date(Date.now()),
@@ -513,7 +550,6 @@ exports.deleteUser = async (req, res, next) => {
 module.exports.getUserById = async (req, res) => {
   try {
     const data = await UserReg.findById(req.params.id);
-
      try {
        if (data.vehicle_details.length < 1) {
          return res.status(205).json({ ResponseMessage: "You have not added your vehicle details yet", RegStatus: 1, data : data });

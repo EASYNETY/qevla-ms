@@ -1,5 +1,5 @@
-const { Schema, model } = require('mongoose');
-const jwt = require('jsonwebtoken');
+const { Schema, model } = require("mongoose");
+const jwt = require("jsonwebtoken");
 
 const fulluserSchema = Schema(
   {
@@ -40,81 +40,74 @@ const fulluserSchema = Schema(
     // referral: {
     //   type: String,
     // },
-    address : [
-       {
-    long: {
-      type: String,
-      trim: true,
-      required: true,
+    address: {
+      lat: {
+        type: Number,
+        trim: true,
+        required: true,
+      },
+      lng: {
+        type: Number,
+        trim: true,
+        required: true,
+      },
     },
-    lat: {
-      type: String,
-      trim: true,
-      required: true,
+    vehicle_details: {
+      v_manufacturer: {
+        type: String,
+        trim: true,
+        required: true,
+      },
+      vehicle_type: {
+        type: String,
+        trim: true,
+        required: true,
+      },
+      max_weight: {
+        type: String,
+        required: true,
+      },
+      v_license: {
+        type: String,
+        required: true,
+      },
+      address: {
+        type: String,
+        required: true,
+      },
     },
-  },
-    ],
-    vehicle_details: [
-      {
-        v_manufacturer: {
-          type: String,
-          trim: true,
-          required: true,
-        },
-        vehicle_type: {
-          type: String,
-          trim: true,
-          required: true,
-        },
-        max_weight: {
-          type: String,
-          required: true,
-        },
-        v_license: {
-          type: String,
-          required: true,
-        },
-        address: {
-          type: String,
-          required: true,
-        },
+    documents: {
+      nin: {
+        type: String,
+        trim: true,
+        required: true,
       },
-    ],
-    documents: [
-      {
-        nin: {
-          type: String,
-          trim: true,
-          required: true,
-        },
-        bvn: {
-          type: String,
-          required: true,
-        },
-        license: {
-          type: String,
-          required: true,
-        },
+      bvn: {
+        type: String,
+        required: true,
       },
-    ],
-    payment_details: [
-      {
-        bank_holder_name: {
-          type: String,
-          trim: true,
-          required: true,
-        },
-        account_number: {
-          type: String,
-          trim: true,
-          required: true,
-        },
-        bank_name: {
-          type: String,
-          required: true,
-        },
+      license: {
+        type: String,
+        required: true,
       },
-    ],
+    },
+    payment_details: {
+      bank_holder_name: {
+        type: String,
+        trim: true,
+        required: true,
+      },
+      account_number: {
+        type: String,
+        trim: true,
+        required: true,
+      },
+      bank_name: {
+        type: String,
+        required: true,
+      },
+    },
+    
     // station: [
     //   { type: Schema.Types.ObjectId, ref: "service-station", require: true },
     // ],

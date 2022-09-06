@@ -3,6 +3,7 @@ const {
   signUp,
   personalInfo,
   login,
+  adminLogin,
   getUsers,
   createAdmin,
   getUserById,
@@ -36,6 +37,7 @@ router.route("/update/:id").patch(updateUserById);
 router.route("/admin/delete").delete(deleteUser);
 // router.route("/admin/getall").get(getUsers);
 router.route("/login").post(login);
+router.route("/admin-login").post(adminLogin);
 router.route("/login/verify").post(personalInfo);
 router.route("/get/all").get(getUsers);
 router.route("/delete").delete(deleteUser);
