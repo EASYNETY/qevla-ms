@@ -11,7 +11,7 @@ const JWTSecret = process.env.JWT_SECRET_KEY;
 const bcryptSalt = process.env.BCRYPT_SALT;
 const clientURL = process.env.CLIENT_URL;
 
-const requestPasswordReset = async (req, res, email) => {
+const requestPasswordReset = async (email) => {
 try {
     const user = await UserReg.findOne({ email });
     if (!user) throw new Error("Email does not exist");
@@ -39,11 +39,12 @@ try {
       },
       "./template/requestResetPassword.handlebars"
     );
-    res.status(200).json({
+    return {
+      responseCode: "00",
       message: "Password request sent successfully!!",
       token: resetToken,
       userId: user._id
-    }); link;
+    };
 } catch (err) {
   console.log(err);
   return {error: err.message}
