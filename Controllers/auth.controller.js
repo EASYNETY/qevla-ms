@@ -14,6 +14,7 @@ const resetPasswordRequestController = async (req, res, next) => {
   return res.json(requestPasswordResetService);
 };
 
+
 const resetPasswordController = async (req, res, next) => {
   console.log("Reset password");
   const resetPasswordService = await resetPassword(
