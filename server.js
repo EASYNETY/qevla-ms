@@ -46,7 +46,7 @@ connection.once("open", () => {
       case "insert":
         const address = {
           _id: change.fullDocument._id,
-          long: change.fullDocument.long,
+          long: change.fullDocument.lng,
           lat: change.fullDocument.lat
         };
 
