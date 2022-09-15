@@ -8,10 +8,25 @@ const authRouter = require("./Routers/index.route");
 const CustomerService = require("./services/customer-service");
 const UserAuth = require("./Controllers/middlewares/auth");
 const cookieParser = require("cookie-parser");
+const UserReg = require("./Model/fullReguserModel");
+const Token = require("./Model/Token.model");
+const sendEmail = require("./utils/email/sendEmail");
+// const popup = require("popups");
+const crypto = require("crypto");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 app.use(cookieParser());
 const cors = require("cors");
+app.use(express.urlencoded({ extended: false }));
+app.use("/static", express.static(__dirname + "/static"));
+app.set("view engine", "ejs");
 
-app.use(cors()); 
+const JWTSecret = process.env.JWT_SECRET_KEY;
+const bcryptSalt = process.env.BCRYPT_SALT;
+const clientURL = process.env.CLIENT_URL;
+
+
+app.use(cors());
 
 app.options(
   "*",
@@ -34,10 +49,7 @@ app.use("/api/service-station", serviceRouter);
 // app.use("/api/auth/password-reset", authRouter);
 app.use("/api/auth", authRouter);
 app.get("/", async (req, res) => {
-  res.status(200).send(`<h1>Welcome to Qevla</h1>
-  <h3>This project contains the API endpoints for <ul><li>User Onboarding</li><li>Authorization and authentication</li>
-  <li>Service Station Map registration /Pinning</li></ul> 
-  Enjoy your seemless experience🙌 </h3>`);
+  res.status(200).render("pages/home");
 });
 
 app.get("/api/user/get/all", verifyTokenAndAuthorization, function (req, res) {
@@ -58,6 +70,135 @@ app.get("/api/isadmin/:id", function (req, res) {
       return res.status(400).send({ message: "User is not Admin" });
     }
   });
+});
+
+app.get("/api/auth/forgot-password",  (req, res, next) => {
+  res.render("pages/forgot-password");
+});
+
+app.post("/api/auth/forgot-password", async  (req, res, next) => {
+  const { email } = req.body;
+  try {
+    const user = await UserReg.findOne({ email });
+    if (!user) throw new Error("User  does not exist");
+console.log(user);
+    secret = JWTSecret + user.password;
+    const payload = {
+      email: user.email,
+      id: user._id,
+    };
+console.log("The generated secret>>>", secret);
+    const token = jwt.sign(payload, secret, { expiresIn: "15m" });
+    console.log("This is token", token)
+    const link = `${clientURL}/api/auth/password-reset/${user._id}/${token}`;
+
+    sendEmail(
+      user.email,
+      "Password Reset Request",
+      {
+        name: user.name,
+        link: link,
+      },
+      "./template/requestResetPassword.handlebars"
+    );
+    console.log(link);
+        res.render("pages/success-email", { email: user.email });
+   } catch (err) {
+    console.log(err);
+    res.send( { error: err.message });
+  }
+});
+
+app.get("/api/auth/password-reset/:id/:token", async (req, res, next) => {
+  const { id, token } = req.params;
+  // res.send(req.params);
+  // console.log(id);
+  const user = await UserReg.findById(req.params.id);
+
+
+     if (!user) {
+       res.send("No user with the token exist");
+       
+     }
+    const secret = JWTSecret + user.password;
+  try {
+    const payload = jwt.verify(token, secret);
+    res.render("pages/reset-password", { email: user.email });
+  } catch (error) {
+    console.log(error);
+    res.json({ status: "Something Went Wrong" , error});
+  }
+});
+
+app.post("/api/auth/password-reset/:id/:token", async (req, res, next) => {
+  const { id, token } = req.params;
+  const { password, password2 } = req.body;
+  const user = await UserReg.findById(req.params.id);
+  if (!user) {
+    res.send("No user with the token exist");
+  }
+  const secret = JWTSecret + user.password;
+  try {
+    const payload = jwt.verify(token, secret);
+    const encryptedPassword = await bcrypt.hash(password, 10);
+    console.log(encryptedPassword);
+    user.password = encryptedPassword;
+    user.save();
+    // res.render('http://localhost:3000/auth/login');
+        res.writeHead(302, {
+          Location: "http://localhost:3000/auth/login",
+        });
+        res.end();
+  } catch (error) {
+    console.log(error);
+    res.json({ status: "Something Went Wrong" });
+  }
+});
+
+app.get("/auth/password-reset/:id/:token", async (req, res) => {
+  const { id, token } = req.params;
+  console.log(req.params);
+  const user = await UserReg.findOne({ _id: id });
+  if (!user) {
+   res.send.json({ status: "User Not Exists!!" });
+  }
+  const secret = process.env.JWT_SECRET_KEY + user.password;
+  try {
+    const verify = jwt.verify(token, secret);
+    res.render("index", { email: verify.email, status: "Not Verified" });
+  } catch (error) {
+    console.log(error);
+    res.send("Not Verified");
+  }
+});
+
+app.post("/auth/password-reset/:id/:token", async (req, res) => {
+  const { id, token } = req.params;
+  const { password } = req.body;
+
+  const user = await User.findOne({ _id: id });
+  if (!user) {
+     res.send.json({ status: "User Not Exists!!" });
+  }
+  const secret = JWTSecret + user.password;
+  try {
+    const verify = jwt.verify(token, secret);
+    const encryptedPassword = await bcrypt.hash(password, 10);
+    await User.updateOne(
+      {
+        _id: id,
+      },
+      {
+        $set: {
+          password: encryptedPassword,
+        },
+      }
+    );
+    res.render("index", { email: verify.email, status: "verified" });
+  } catch (error) {
+    console.log(error);
+    res.json({ status: "Something Went Wrong" });
+  }
 });
 // app.post(
 //   "/api/user/signup/vehicle-details",

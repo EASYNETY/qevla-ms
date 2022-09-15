@@ -17,12 +17,12 @@ const resetPasswordRequestController = async (req, res, next) => {
 
 const resetPasswordController = async (req, res, next) => {
   console.log("Reset password");
-  const resetPasswordService = await resetPassword(
-    req.body.userId,
-    req.body.token,
-    req.body.password
-  );
-  return res.status(201).json(resetPasswordService);
+  // const resetPasswordService = await resetPassword(
+  //   req.body.userId,
+  //   req.body.token,
+  //   req.body.password
+  // );
+  return res.status(201).json("resetPasswordService");
 };
 
 
