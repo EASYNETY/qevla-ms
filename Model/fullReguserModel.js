@@ -44,67 +44,67 @@ const fulluserSchema = Schema(
       lat: {
         type: Number,
         trim: true,
-        required: true,
+        // required: true,
       },
       lng: {
         type: Number,
         trim: true,
-        required: true,
+        // required: true,
       },
     },
     vehicle_details: {
       v_manufacturer: {
         type: String,
         trim: true,
-        required: true,
+        // required: true,
       },
       vehicle_type: {
         type: String,
         trim: true,
-        required: true,
+        // required: true,
       },
       max_weight: {
         type: String,
-        required: true,
+        // required: true,
       },
       v_license: {
         type: String,
-        required: true,
+        // required: true,
       },
       address: {
         type: String,
-        required: true,
+        // required: true,
       },
     },
     documents: {
       nin: {
         type: String,
         trim: true,
-        required: true,
+        // required: true,
       },
       bvn: {
         type: String,
-        required: true,
+        // required: true,
       },
       license: {
         type: String,
-        required: true,
+        // required: true,
       },
     },
     payment_details: {
       bank_holder_name: {
         type: String,
         trim: true,
-        required: true,
+        // required: true,
       },
       account_number: {
         type: String,
         trim: true,
-        required: true,
+        // required: true,
       },
       bank_name: {
         type: String,
-        required: true,
+        // required: true,
       },
     },
     
