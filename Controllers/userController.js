@@ -485,7 +485,7 @@ module.exports.adminLogin = async (req, res) => {
         user: user,
       });
     } else {
-      res.status(400).json({ error});
+      res.status(400).json({ error : "Invalid email or password provided"});
     }
     // res.status(400).send("Invalid Credentials");
   } catch (err) {
