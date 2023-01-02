@@ -87,7 +87,8 @@ module.exports.userReg = async (req, res) => {
         "email",
         "password",
         "isAdmin",
-        "address",
+        "userAddress",
+        "location",
         "vehicle_details",
         "documents",
         "payment_details",
@@ -140,6 +141,7 @@ module.exports.userReg = async (req, res) => {
         message: "User phone number already taken!!",
       });
     }
+    else {console.log("Error Encontered!!", error)}
   }
 };
 

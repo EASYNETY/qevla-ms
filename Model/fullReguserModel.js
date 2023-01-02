@@ -1,5 +1,6 @@
 const { Schema, model } = require("mongoose");
 const jwt = require("jsonwebtoken");
+const geocoder = require('../utils/geocoder');
 
 const fulluserSchema = Schema(
   {
@@ -40,18 +41,37 @@ const fulluserSchema = Schema(
     // referral: {
     //   type: String,
     // },
-    address: {
-      lat: {
-        type: Number,
-        trim: true,
-        // required: true,
-      },
-      lng: {
-        type: Number,
-        trim: true,
-        // required: true,
-      },
+    userAddress : {
+      type: String,
+      required: [true, 'Please add an address']
     },
+    address: {
+      // type: {
+      //   type: String,
+      //   enum: ['Point']
+      // },
+      // coordinates: {
+        type: {Number},
+        index: '2dsphere'
+      // },
+      // formattedAddress: String
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    },
+    // address: {
+    //   lat: {
+    //     type: Number,
+    //     trim: true,
+    //     required: true,
+    //   },
+    //   lng: {
+    //     type: Number,
+    //     trim: true,
+    //     required: true,
+    //   },
+    // },
     vehicle_details: {
       v_manufacturer: {
         type: String,
@@ -130,6 +150,23 @@ fulluserSchema.methods.generateJWT = function () {
   );
   return token;
 };
+
+// Geocode & create address
+fulluserSchema.pre('save', async function(next) {
+  const loc = await geocoder.geocode(this.userAddress);
+  this.address = {
+    lng: 
+    // type: 'Point',
+    // coordinates: [
+      loc[0].longitude,
+      lat: loc[0].latitude,
+    formattedAddress: loc[0].formattedAddress
+  };
+
+  // Do not save userAddress
+  this.userAddress = undefined;
+  next();
+});
 
 // module.exports.User = model('user', userSchema);
 module.exports = model("fullUser", fulluserSchema);
