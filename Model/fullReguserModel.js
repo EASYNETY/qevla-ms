@@ -1,6 +1,6 @@
 const { Schema, model } = require("mongoose");
 const jwt = require("jsonwebtoken");
-const geocoder = require('../utils/geocoder');
+const geocoder = require("../utils/geocoder");
 
 const fulluserSchema = Schema(
   {
@@ -41,9 +41,9 @@ const fulluserSchema = Schema(
     // referral: {
     //   type: String,
     // },
-    userAddress : {
+    userAddress: {
       type: String,
-      required: [true, 'Please add an address']
+      required: [true, "Please add an address"],
     },
     address: {
       // type: {
@@ -51,14 +51,14 @@ const fulluserSchema = Schema(
       //   enum: ['Point']
       // },
       // coordinates: {
-        type: {Number},
-        index: '2dsphere'
+      type: { Number },
+      index: "2dsphere",
       // },
       // formattedAddress: String
     },
     createdAt: {
       type: Date,
-      default: Date.now
+      default: Date.now,
     },
     // address: {
     //   lat: {
@@ -127,7 +127,7 @@ const fulluserSchema = Schema(
         // required: true,
       },
     },
-    
+
     // station: [
     //   { type: Schema.Types.ObjectId, ref: "service-station", require: true },
     // ],
@@ -152,15 +152,15 @@ fulluserSchema.methods.generateJWT = function () {
 };
 
 // Geocode & create address
-fulluserSchema.pre('save', async function(next) {
+fulluserSchema.pre("save", async function (next) {
   const loc = await geocoder.geocode(this.userAddress);
   this.address = {
-    lng: 
-    // type: 'Point',
-    // coordinates: [
+    lng:
+      // type: 'Point',
+      // coordinates: [
       loc[0].longitude,
-      lat: loc[0].latitude,
-    formattedAddress: loc[0].formattedAddress
+    lat: loc[0].latitude,
+    formattedAddress: loc[0].formattedAddress,
   };
 
   // Do not save userAddress

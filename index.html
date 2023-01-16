@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.io Example</title>
+  </head>
+  <body>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io();
+      socket.on('newData', function(data) {
+        console.log('Received new data:', data);
+      });
+      function updateData() {
+        var data = { message: 'Hello, World!' };
+        console.log('Sending data:', data);
+        socket.emit('updateData', data);
+      }
+    </script>
+    <button onclick="updateData()">Update Data</button>
+  </body>
+</html>
