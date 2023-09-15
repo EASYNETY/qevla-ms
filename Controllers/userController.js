@@ -806,6 +806,7 @@ module.exports.passReset = async (req, res) => {
 // Assuming you have an endpoint for handling Paystack callbacks
 module.exports.HandlePaymentCallbackUrl = async (req, res) => {
   // Parse the callback data sent by Paystack
+  console.log("This was called!!!!!!");
   const callbackData = req.body;
 
   // Check if the payment was successful
@@ -835,6 +836,7 @@ module.exports.HandlePaymentCallbackUrl = async (req, res) => {
 
 
 module.exports.Transaction = async (req, res) => {
+  console.log(`${process.env.CLIENT_URL_DEV}/api/user/callback/paystack-callback`);
   const { email, amount, subaccount, transaction_charge } = req.body;
 
   const data = JSON.stringify({
@@ -842,7 +844,7 @@ module.exports.Transaction = async (req, res) => {
     amount,
     subaccount,
     transaction_charge,
-    callback_url: 'https://localhost:3001/paystack-callback', 
+    callback_url:`${process.env.CLIENT_URL_DEV}`
   });
 
   const options = {

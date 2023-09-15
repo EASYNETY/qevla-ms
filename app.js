@@ -54,6 +54,39 @@ app.get("/", async (req, res) => {
   res.status(200).render("pages/home");
 });
 
+
+// // Assuming you have an endpoint for handling Paystack callbacks
+// app.post('/paystack-callback', (req, res) => {
+//   // Parse the callback data sent by Paystack
+//   console.log("This was called!!!!!!");
+//   const callbackData = req.body;
+
+//   // Check if the payment was successful
+//   if (callbackData.status === 'success') {
+//     // Calculate the subaccount's share (percentage)
+//     const subaccountShare = calculateSubaccountShare(callbackData.amount);
+
+//     // Initiate a transfer to the subaccount using the Paystack API
+//     initiateTransferToSubaccount(callbackData.customer_id, subaccountShare)
+//       .then(() => {
+//         // Update your database to record the successful payment
+//         updatePaymentStatus(callbackData);
+
+//         // Send a response to Paystack (HTTP 200 OK)
+//         res.status(200).send('Callback received and processed.');
+//       })
+//       .catch((error) => {
+//         console.error('Error processing callback:', error);
+//         res.status(500).send('An error occurred while processing the callback.');
+//       });
+//   } else {
+//     // Handle failed payments or other statuses
+//     // Update your database accordingly
+//     res.status(200).send('Callback received but payment was not successful.');
+//   }
+// });
+
+
 app.get("/api/user/get/all", verifyTokenAndAuthorization, function (req, res) {
   User.find({}, function (err, users) {
     if (err) {

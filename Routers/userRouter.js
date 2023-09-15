@@ -50,6 +50,7 @@ router.route("/get/all").get(getUsers);
 router.route("/delete").delete(deleteUser);
 router.route("/update/:id").patch(updateUserById);
 router.route("/accept-payment").post(Transaction);
+// router.route("/callback/paystack-callback").get(HandlePaymentCallbackUrl);
 router.route("/paystack-callback").post(HandlePaymentCallbackUrl);
 router.route("/payment/transactions").get(transactionList);
 router.route("/create-subaccount").post(CreateSubAccount);
