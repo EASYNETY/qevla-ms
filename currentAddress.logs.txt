@@ -1,0 +1,8 @@
+{"id":"63bedc1d7d86f772b2aaee54","address":{"lng":3.47569,"lat":6.48427}}
+{"id":"63bedc1d7d86f772b2aaee54","address":{"lng":3.47569,"lat":6.48427},"timestamp":1673905319042}
+[1,673,906,395,298] {"id":"63bedc1d7d86f772b2aaee54","address":{"lng":3.47569,"lat":6.48427}}
+
+[Mon Jan 16 2023 23:05:40 GMT+0100 (West Africa Standard Time)] {"id":"63bedc1d7d86f772b2aaee54","address":{"lng":3.47569,"lat":6.48427}}
+
+[Mon, 16 Jan 2023 22:10:54 GMT] {"id":"63bedc1d7d86f772b2aaee54","address":{"lng":3.47569,"lat":6.48427}}
+

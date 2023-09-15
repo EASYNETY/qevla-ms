@@ -17,7 +17,14 @@ const {
   getPaymentDetailsByUserId,
   getRegistrationStatusById,
   userReg,
+  Transaction,
+  HandlePaymentCallbackUrl,
+  transactionList,
+  CreateSubAccount,
+  getSubAccountList
 } = require("../Controllers/userController");
+
+// const Transaction = require("../Controllers/payment.controller");
 
 
 router.route("/signup").post(userReg);
@@ -42,5 +49,10 @@ router.route("/login/verify").post(personalInfo);
 router.route("/get/all").get(getUsers);
 router.route("/delete").delete(deleteUser);
 router.route("/update/:id").patch(updateUserById);
+router.route("/accept-payment").post(Transaction);
+router.route("/paystack-callback").post(HandlePaymentCallbackUrl);
+router.route("/payment/transactions").get(transactionList);
+router.route("/create-subaccount").post(CreateSubAccount);
+router.route("/payment/get-subaccount").get(getSubAccountList);
 
 module.exports = router;

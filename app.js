@@ -31,10 +31,11 @@ app.use(cors());
 app.options(
   "*",
   cors({ origin: "http://localhost:3000", optionsSuccessStatus: 200 }),
-  // cors({ origin: "wss://127.0.0.1:3001", optionsSuccessStatus: 200 })
+  cors({ origin: "https://admin.socket.io", optionsSuccessStatus: 200 })
 );
 
-app.use(cors({ origin: "http://localhost:3000", optionsSuccessStatus: 200 }));
+app.use(cors({ origin: '*' }));
+// app.use(cors({ origin: "https://admin.socket.io", optionsSuccessStatus: 200 }));
 app.use(express.json());
 const {
   verifyToken,

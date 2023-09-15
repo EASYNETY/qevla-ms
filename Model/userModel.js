@@ -40,21 +40,6 @@ const userSchema = Schema(
     // referral: {
     //   type: String,
     // },
-    address: [
-      { type: Schema.Types.ObjectId, ref: "addressModel", require: true },
-    ],
-    vehicle_details: [
-      { type: Schema.Types.ObjectId, ref: "vehicleModel", require: true },
-    ],
-    documents: [
-      { type: Schema.Types.ObjectId, ref: "documentModel", require: true },
-    ],
-    payment_details: [
-      { type: Schema.Types.ObjectId, ref: "paymentModel", require: true },
-    ],
-    // station: [
-    //   { type: Schema.Types.ObjectId, ref: "service-station", require: true },
-    // ],
   },
   { timestamps: true }
 );

@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const _ = require("lodash");
 const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
+const https = require('https');
 const User = require("../Model/userModel");
 const UserReg = require("../Model/fullReguserModel");
 const Address = require("../Model/addressModel");
@@ -14,9 +15,11 @@ const userModel = require("../Model/userModel");
 const serviceModel = require("../Model/serviceModel");
 const { verifyToken, verifyTokenAndAuthorization } = require("./verifyToken");
 const CustomerService = require("../services/customer-service");
+const Transaction = require('../Model/trnxModel')
+
 // const UserAuth = require("./middlewares/auth");
 
-// const accountSid = process.env.ACCOUNT_SID;
+const Paystack_KEY = process.env.PAYSTACK_KEY;
 // const authToken = process.env.AUTH_TOKEN;
 // const client = require("twilio")(accountSid, authToken);
 
@@ -367,9 +370,6 @@ module.exports.userAddress = async (req, res, next) => {
     }
   }
 };
-
-
-
 
 
 module.exports.getRegistrationStatusById = async (req, res) => {
@@ -798,4 +798,252 @@ module.exports.passReset = async (req, res) => {
       }
     );
   }
+};
+
+
+//Payment / Transtions
+
+// Assuming you have an endpoint for handling Paystack callbacks
+module.exports.HandlePaymentCallbackUrl = async (req, res) => {
+  // Parse the callback data sent by Paystack
+  const callbackData = req.body;
+
+  // Check if the payment was successful
+  if (callbackData.status === 'success') {
+    // Calculate the subaccount's share (percentage)
+    const subaccountShare = calculateSubaccountShare(callbackData.amount);
+
+    // Initiate a transfer to the subaccount using the Paystack API
+    initiateTransferToSubaccount(callbackData.customer_id, subaccountShare)
+      .then(() => {
+        // Update your database to record the successful payment
+        updatePaymentStatus(callbackData);
+
+        // Send a response to Paystack (HTTP 200 OK)
+        res.status(200).send('Callback received and processed.');
+      })
+      .catch((error) => {
+        console.error('Error processing callback:', error);
+        res.status(500).send('An error occurred while processing the callback.');
+      });
+  } else {
+    // Handle failed payments or other statuses
+    // Update your database accordingly
+    res.status(200).send('Callback received but payment was not successful.');
+  }
+};
+
+
+module.exports.Transaction = async (req, res) => {
+  const { email, amount, subaccount, transaction_charge } = req.body;
+
+  const data = JSON.stringify({
+    email,
+    amount,
+    subaccount,
+    transaction_charge,
+    callback_url: 'https://localhost:3001/paystack-callback', 
+  });
+
+  const options = {
+    hostname: 'api.paystack.co',
+    port: 443,
+    path: '/transaction/initialize',
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${Paystack_KEY}`, // Make sure Paystack_KEY is defined
+      'Content-Type': 'application/json',
+    },
+  };
+
+  const paystackRequest = https.request(options, (paystackResponse) => {
+    let responseData = '';
+
+    paystackResponse.on('data', (chunk) => {
+      responseData += chunk;
+    });
+
+    paystackResponse.on('end', () => {
+      // Parse the response and send it as JSON to the client
+      const paystackData = JSON.parse(responseData);
+
+      console.log(paystackData);
+      // Assuming you have a function to save the transaction to the database
+      // saveTransactionToDatabase(paystackData);
+
+      res.json(paystackData);
+    });
+  });
+
+  paystackRequest.on('error', (error) => {
+    console.error(error);
+    res.status(500).json({ error: 'An error occurred while initializing payment.' });
+  });
+
+  paystackRequest.write(data);
+  paystackRequest.end();
+};
+
+function saveTransactionToDatabase(paystackData) {
+  // Extract the required fields from Paystack data
+  const {
+      id: paystackId,
+      customer: {
+          account_name: accountHolderName,
+      },
+      authorization: {
+          account_number: accountNumber,
+          bank: bankName,
+      },
+      amount,
+  } = paystackData.data;
+
+  // Create a new transaction document
+  const newTransaction = new Transaction({
+      paystack_id: paystackId,
+      account_holder_name: accountHolderName,
+      account_number: accountNumber,
+      bank_name: bankName,
+      amount: amount / 100, // Convert from kobo to naira or your preferred currency
+      // Add more fields from Paystack data as needed
+  });
+
+  // Save the transaction to the database
+  newTransaction.save()
+      .then(() => {
+          console.log('Transaction saved to the database.');
+      })
+      .catch((error) => {
+          console.error('Error saving transaction:', error);
+      });
+}
+
+
+module.exports.transactionList = async (req, res) => {
+  console.log("This endpoint was called!!!");
+  const options = {
+    hostname: 'api.paystack.co',
+    port: 443,
+    path: '/transaction',
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${Paystack_KEY}`, // Replace 'SECRET_KEY' with your actual Paystack secret key
+    },
+  };
+
+  const paystackRequest = https.request(options, (paystackResponse) => {
+    let responseData = '';
+
+    paystackResponse.on('data', (chunk) => {
+      responseData += chunk;
+    });
+
+    paystackResponse.on('end', () => {
+      try {
+        // Parse the response and send it as JSON to the client
+        const paystackData = JSON.parse(responseData);
+        res.json(paystackData);
+      } catch (error) {
+        console.error('Error parsing Paystack API response:', error);
+        res.status(500).json({ error: 'An error occurred while fetching transaction data.' });
+      }
+    });
+  });
+
+  paystackRequest.on('error', (error) => {
+    console.error('Error making Paystack API request:', error);
+    res.status(500).json({ error: 'An error occurred while fetching transaction data.' });
+  });
+
+  paystackRequest.end();
+};
+
+
+module.exports.CreateSubAccount = async (req, res) => {
+  // Replace 'SECRET_KEY' with your actual Paystack secret key
+  const paystackSecretKey = process.env.PAYSTACK_KEY;
+
+  const requestData = JSON.stringify({
+    business_name: req.body.business_name,
+    settlement_bank: req.body.settlement_bank,
+    account_number: req.body.account_number,
+    percentage_charge: req.body.percentage_charge,
+  });
+
+  const options = {
+    hostname: 'api.paystack.co',
+    port: 443,
+    path: '/subaccount',
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${paystackSecretKey}`,
+      'Content-Type': 'application/json',
+    },
+  };
+
+  const paystackRequest = https.request(options, (paystackResponse) => {
+    let responseData = '';
+
+    paystackResponse.on('data', (chunk) => {
+      responseData += chunk;
+    });
+
+    paystackResponse.on('end', () => {
+      try {
+        const paystackData = JSON.parse(responseData);
+        res.json(paystackData);
+      } catch (error) {
+        console.error('Error parsing Paystack API response:', error);
+        res.status(500).json({ error: 'An error occurred while creating the subaccount.' });
+      }
+    });
+  });
+
+  paystackRequest.on('error', (error) => {
+    console.error('Error making Paystack API request:', error);
+    res.status(500).json({ error: 'An error occurred while creating the subaccount.' });
+  });
+
+  paystackRequest.write(requestData);
+  paystackRequest.end();
+};
+
+module.exports.getSubAccountList = async (req, res) => {
+  // Define Paystack API options
+  const options = {
+    hostname: 'api.paystack.co',
+    port: 443,
+    path: '/subaccount',
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${Paystack_KEY}`, // Replace with your actual secret key
+    },
+  };
+
+  // Make the GET request to Paystack
+  const paystackRequest = https.request(options, (paystackResponse) => {
+    let responseData = '';
+
+    paystackResponse.on('data', (chunk) => {
+      responseData += chunk;
+    });
+
+    paystackResponse.on('end', () => {
+      try {
+        // Parse the response and send it as JSON to the client
+        const paystackData = JSON.parse(responseData);
+        res.json(paystackData);
+      } catch (error) {
+        console.error('Error parsing Paystack API response:', error);
+        res.status(500).json({ error: 'An error occurred while fetching subaccount data.' });
+      }
+    });
+  });
+
+  paystackRequest.on('error', (error) => {
+    console.error('Error making Paystack API request:', error);
+    res.status(500).json({ error: 'An error occurred while fetching subaccount data.' });
+  });
+
+  paystackRequest.end();
 };
